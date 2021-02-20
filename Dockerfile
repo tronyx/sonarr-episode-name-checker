@@ -1,16 +1,11 @@
-#FROM lsiobase/alpine:3.11
-FROM ghcr.io/organizr/base
+ARG BASE_IMAGE
+ARG ARCH
+FROM ${BASE_IMAGE:-ghcr.io/organizr/base:2021-02-13_19}-${ARCH:-linux-amd64}
 
 LABEL maintainer="tronyx"
 
 # Add local files
 COPY ./ /app
 WORKDIR /app
-
-# Install packages
-#RUN apk add --no-cache \
-#	nodejs-npm \
-#	nodejs-current \
-#	&& npm install
 
 CMD sh /app/SonarrEpisodeNameChecker.sh
