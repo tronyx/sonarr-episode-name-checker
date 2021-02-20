@@ -7,12 +7,12 @@
 # Path to parent dir for all media
 mediaPath='/mnt/data/media/Videos'
 # List of shows you want to be excluded
-nameExclusionList='name_excludes.txt'
+nameExclusionList='excludes/name_excludes.txt'
 # List of paths you want to be excluded
-pathExclusionList='path_excludes.txt'
+pathExclusionList='excludes/path_excludes.txt'
 # Column number to use with the awk command in the find_shows function
 # You may need to adjust this value depending on the number of columns in the full path to the show name
-# For example, my path to an episode is /mnt/data/media/Videos/TV Shows/Show Name/Season 1/Episode Name which ends up being 7
+# For example, my path to an episode is "/mnt/data/media/Videos/TV Shows/Show Name/Season 1/Episode Name" which ends up being 7
 column=7
 # Whether or not you want to display output on the CLI
 cliDisplay='true'

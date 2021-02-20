@@ -1,7 +1,11 @@
 # Sonarr Episode Name Checker
 [![CodeFactor](https://www.codefactor.io/repository/github/tronyx/sonarr-episode-name-checker/badge)](https://www.codefactor.io/repository/github/tronyx/sonarr-episode-name-checker) [![made-with-bash](https://img.shields.io/badge/Made%20with-Bash-1f425f.svg)](https://www.gnu.org/software/bash/) [![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/tronyx/sonarr-episode-name-checker/blob/master/LICENSE.md)
 
-Script to check for TV Show and Anime episodes that may be named with "Episode ##" or "TBA" that should not be, IE: episode name data was missing or incorrect within Sonarr when the episode was imported.
+Script to check for TV Show and Anime episodes that may be named with "Episode ##" or "TBA" that should not be, IE: episode name data was missing or incorrect within Sonarr when the episode was imported. Output can be displayed right in the CLI once the script completes and/or a Discord notification can be sent to a custom webhook:
+
+![Shell Output](/images/shell.png)
+
+![Discord Webhook](/images/discord.png)
 
 ## Setting it up
 
