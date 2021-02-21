@@ -23,6 +23,9 @@ Script to check for TV Show and Anime episodes that may be named with "Episode #
 5. Set any other variables you would like to set.
     * If `notify` is set to `true`, but you did not set the `webhook` variable the script will prompt you to enter it the first time you run it.
 
+
+Docker image coming soon!
+
 ## Scheduling
 
 Now that you have it configured so that everything is working properly, you can use a cronjob to schedule the script to run automatically.
