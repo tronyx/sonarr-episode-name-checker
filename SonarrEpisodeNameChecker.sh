@@ -93,8 +93,10 @@ display_output() {
         cat "${showsFile}"
         echo ''
         echo "You should perform a Refresh & Scan on these shows in Sonarr and then rename them if they've updated with the correct name."
+        echo ''
     elif [[ ${showCount} -eq '0' ]]; then
         echo 'No shows found with episodes named "Episode ##" or "TBA".'
+        echo ''
     fi
 }
 
