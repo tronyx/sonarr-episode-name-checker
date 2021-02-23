@@ -61,6 +61,7 @@ get_line_numbers() {
 }
 
 # Function to check that the webhook URL is defined if alert is set to true.
+# If alert is set to true and the URL is not defined, prompt the user to provide it.
 check_webhook_url() {
     if [[ ${webhookUrl} == '' ]] && [[ ${notify} == 'true' ]]; then
         echo -e "${red}You didn't define your Discord webhook URL!${endColor}"
@@ -74,13 +75,13 @@ check_webhook_url() {
     fi
 }
 
-# Function to find list of shows with incorrect names
+# Function to find list of shows with incorrect names.
 find_shows() {
     showsFile=$(mktemp)
     find "${mediaPath}" -type f \( -name "* - Episode*" -o -name "*TBA*" \) | grep -v -f "${pathExclusionList}" | grep -v -f "${nameExclusionList}" | awk -F/ -v col="${column}" '{print $col}' | uniq > "${showsFile}"
 }
 
-# Function to determine the number of results to then determine whether or not what output to display
+# Function to determine the number of results to then determine whether or not what output to display.
 show_count() {
     showCount=$(wc -l "${showsFile}" | awk '{print $1}')
 }
@@ -118,7 +119,7 @@ send_notification() {
     fi
 }
 
-# Main function to run all other functions
+# Main function to run all other functions.
 main() {
     get_line_numbers
     check_webhook_url
