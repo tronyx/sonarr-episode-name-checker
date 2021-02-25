@@ -1,7 +1,7 @@
 **By submitting this pull request, I confirm the following:**
 *Please fill in any appropriate check-boxes, e.g: [X]*
 
--   [ ]   I have read and understood the [contributors guide](https://github.com/christronyxyocum/sonarr-episode-name-checker/blob/master/.github/CONTRIBUTING.md), as well as this entire template.
+-   [ ]   I have read and understood the [contributors guide](https://github.com/tronyx/sonarr-episode-name-checker/blob/master/.github/CONTRIBUTING.md), as well as this entire template.
 -   [ ]   I have made only one major change in my proposed changes.
 -   [ ]   I have commented my proposed changes within the code.
 -   [ ]   I have tested my proposed changes, and have included unit tests where possible.
