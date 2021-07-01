@@ -121,6 +121,7 @@ send_notification() {
 
 # Main function to run all other functions.
 main() {
+    get_scriptname
     get_line_numbers
     check_webhook_url
     find_shows
