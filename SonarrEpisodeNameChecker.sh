@@ -103,7 +103,7 @@ display_output() {
 
 # Function to send Discord notifications.
 send_notification() {
-    if [[ -s ${showsFile} ]]; then
+    if [[ -f ${showsFile} ]]; then
         badShows=$(awk '{print}' ORS='\\n' "${showsFile}")
         if [[ ${notifyAll} == 'true' ]]; then
             if [[ ${showCount} -gt '0' ]]; then
