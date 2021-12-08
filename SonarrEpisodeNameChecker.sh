@@ -78,7 +78,7 @@ check_webhook_url() {
 # Function to find list of shows with incorrect names.
 find_shows() {
     showsFile=$(mktemp)
-    find "${mediaPath}" -type f \( -name "* - Episode*" -o -name "*TBA*" \) | grep -v -f "${pathExclusionList}" | grep -v -f "${nameExclusionList}" | awk -F/ -v col="${column}" '{print $col}' | uniq > "${showsFile}"
+    find "${mediaPath}" -type f \( -name "* - Episode*" -o -name "*TBA*" \) | grep -v partial | grep -v -f "${pathExclusionList}" | grep -v -f "${nameExclusionList}" | awk -F/ -v col="${column}" '{print $col}' | uniq > "${showsFile}"
 }
 
 # Function to determine the number of results to then determine whether or not what output to display.
