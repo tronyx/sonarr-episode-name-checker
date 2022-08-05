@@ -104,11 +104,9 @@ foreach ($series in $filteredSeries){
         if ($apiStatusCode -notmatch "2\d\d"){
             throw "Unable to refresh metadata for $($series.title)"
         }
-
-        Start-Sleep -Seconds 5 -Verbose
     }
 
-    if ($config.Sonarr.sonarrRename -eq $true){
+    if ($config.Sonarr.sonarrRename -eq "true"){
         foreach ($episode in $episodesToRename){
 
             $renameSeries = Invoke-RestMethod -Uri "$($config.Sonarr.sonarrURL)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RenameFiles`",`"seriesId`":$($episode.seriesId),`"files`":[$($episode.Id)]}" -StatusCodeVariable apiStatusCode
@@ -119,6 +117,8 @@ foreach ($series in $filteredSeries){
         }
     }
     else {
-        Write-Host "$($series.title) has episodes to be renamed"
+        foreach ($episode in $episodesToRename){
+            Write-Host "$($series.title) has episodes to be renamed"
+        }
     }
 }
