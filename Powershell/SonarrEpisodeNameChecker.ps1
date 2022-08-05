@@ -2,8 +2,6 @@
 param (
 )
 
-$timer = [System.Diagnostics.Stopwatch]::StartNew()
-
 # Function to read config file.
 function Read-IniFile {
     param (
@@ -110,15 +108,17 @@ foreach ($series in $filteredSeries){
         Start-Sleep -Seconds 5 -Verbose
     }
 
-    foreach ($episode in $episodesToRename){
+    if ($config.Sonarr.sonarrRename -eq $true){
+        foreach ($episode in $episodesToRename){
 
-        $renameSeries = Invoke-RestMethod -Uri "$($config.Sonarr.sonarrURL)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RenameFiles`",`"seriesId`":$($episode.seriesId),`"files`":[$($episode.Id)]}" -StatusCodeVariable apiStatusCode
+            $renameSeries = Invoke-RestMethod -Uri "$($config.Sonarr.sonarrURL)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RenameFiles`",`"seriesId`":$($episode.seriesId),`"files`":[$($episode.Id)]}" -StatusCodeVariable apiStatusCode
 
-        if ($apiStatusCode -notmatch "2\d\d"){
-            throw "Unable to rename episodes for $($series.title)"
+            if ($apiStatusCode -notmatch "2\d\d"){
+                throw "Unable to rename episodes for $($series.title)"
+            }
         }
     }
+    else {
+        Write-Host "$($series.title) has episodes to be renamed"
+    }
 }
-
-$timer.Stop()
-$timer.ElapsedMilliseconds
