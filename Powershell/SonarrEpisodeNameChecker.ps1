@@ -44,7 +44,13 @@ else {
 }
 
 # Filter series with names that match anything in $seriesExclusions and anything that doesn't match the value of sonarrSeriesStatus in the config file.
-$filteredSeries = $allSeries | Where-Object {$_.title -notin $seriesExclusions -and $_.status -eq $($sonarrSeriesStatus)}
+if ($sonarrSeriesStatus -ne ""){
+    $filteredSeries = $allSeries | Where-Object {$_.title -notin $seriesExclusions -and $_.status -eq $($sonarrSeriesStatus)}
+}
+
+else {
+    $filteredSeries = $allSeries | Where-Object {$_.title -notin $seriesExclusions}
+}
 
 Write-Verbose "Series filtering completed, there are now $($filteredSeries.count) series left to process"
 
