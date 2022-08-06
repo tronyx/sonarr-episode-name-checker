@@ -2,15 +2,15 @@
 param (
     [Parameter()]
     [bool]
-    $renameSeries
+    $renameSeries = $false
 )
 
 #------------- DEFINE VARIABLES -------------#
 
-[string]$sonarrApiKey =
-[string]$sonarrUrl =
+[string]$sonarrApiKey = "c53cda2a98244c1b880ad038a2708fc1"
+[string]$sonarrUrl = "http://blackbox.lan:8989/sonarr"
 [string]$sonarrSeriesStatus = "continuing"
-[bool]$renameSeries = $false
+
 
 #------------- SCRIPT STARTS -------------#
 
@@ -74,21 +74,24 @@ foreach ($series in $filteredSeries){
         if ($apiStatusCode -notmatch "2\d\d"){
             throw "Unable to refresh metadata for $($series.title)"
         }
-    }
 
-    if ($renameSeries -eq $true){
-        foreach ($episode in $episodesToRename){
+        Start-Sleep 5
 
-            $renameSeries = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RenameFiles`",`"seriesId`":$($episode.seriesId),`"files`":[$($episode.Id)]}" -StatusCodeVariable apiStatusCode
+        if ($renameSeries -eq $true){
 
-            if ($apiStatusCode -notmatch "2\d\d"){
-                throw "Unable to rename episodes for $($series.title)"
+            Write-Host "Renaming episodes in $($series.title)"
+
+            if ($episodesToRename.seriesid -eq $seriesIdToRefresh){
+
+                $renameCommand = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RenameFiles`",`"seriesId`":$($seriesIdToRefresh),`"files`":[$($episodesToRename.id -join ",")]}" -StatusCodeVariable apiStatusCode
+
+                if ($apiStatusCode -notmatch "2\d\d"){
+                    throw "Unable to rename episodes for $($series.title)"
+                }
             }
         }
-    }
-    else {
-        foreach ($episode in $episodesToRename){
-            Write-Host "$($series.title) has episodes to be renamed"
+        else {
+                Write-Host "$($series.title) has episodes to be renamed"
         }
     }
 }
