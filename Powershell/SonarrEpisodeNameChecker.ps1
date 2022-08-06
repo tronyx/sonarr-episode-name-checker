@@ -1,48 +1,18 @@
 [CmdletBinding(SupportsShouldProcess)]
 param (
+    [Parameter()]
+    [bool]
+    $renameSeries = $false
 )
 
-# Function to read config file.
-function Read-IniFile {
-    param (
-        $file
-    )
+#------------- DEFINE VARIABLES -------------#
 
-    $ini = @{}
+[string]$sonarrApiKey = "c53cda2a98244c1b880ad038a2708fc1"
+[string]$sonarrUrl = "http://blackbox.lan:8989/sonarr"
+[string]$sonarrSeriesStatus = "continuing"
 
-    # Create a default section if none exist in the file. Like a java prop file.
-    $section = "NO_SECTION"
-    $ini[$section] = @{}
 
-    switch -regex -file $file {
-        "^\[(.+)\]$" {
-            $section = $matches[1].Trim()
-            $ini[$section] = @{}
-        }
-        "^\s*([^#].+?)\s*=\s*(.*)" {
-            $name,$value = $matches[1..2]
-            # skip comments that start with semicolon:
-            if (!($name.StartsWith(";"))) {
-                $ini[$section][$name] = $value.Trim()
-            }
-        }
-    }
-    $ini
-}
-
-# Specify location of config file, normally located in the same directory as the script.
-$configFile = Join-Path -Path $PSScriptRoot -ChildPath SonarrEpisodeNameChecker.conf
-Write-Verbose "Location for config file is $configFile"
-
-# Read the parameters from the config file.
-if (Test-Path  $configFile -PathType Leaf){
-    $config = Read-IniFile -File $configFile
-    Write-Verbose "Config file parsed"
-}
-
-else {
-    throw "Unable to locate config file"
-}
+#------------- SCRIPT STARTS -------------#
 
 # Specify location of exclusions file, normally located one directory above the current script.
 $seriesExclusionsFile = Join-Path (Get-Item $PSScriptRoot).Parent -ChildPath excludes\name_excludes.txt
@@ -59,11 +29,11 @@ else {
 
 # Declare headers that will be passed on each API call.
 $webHeaders = @{
-    "x-api-key"= "$($config.Sonarr.sonarrApiKey)"
+    "x-api-key"= "$($sonarrApiKey)"
 }
 
 # Retrieve all Sonarr series.
-$allSeries = Invoke-RestMethod -Uri "$($config.Sonarr.sonarrURL)/api/v3/series" -Headers $webHeaders -StatusCodeVariable apiStatusCode
+$allSeries = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/series" -Headers $webHeaders -StatusCodeVariable apiStatusCode
 
 if ($apiStatusCode -notmatch "2\d\d"){
     throw "Unable to retrieve series from Sonarr"
@@ -74,7 +44,7 @@ else {
 }
 
 # Filter series with names that match anything in $seriesExclusions and anything that doesn't match the value of sonarrSeriesStatus in the config file.
-$filteredSeries = $allSeries | Where-Object {$_.title -notin $seriesExclusions -and $_.status -eq $($config.Sonarr.sonarrSeriesStatus)}
+$filteredSeries = $allSeries | Where-Object {$_.title -notin $seriesExclusions -and $_.status -eq $($sonarrSeriesStatus)}
 
 Write-Verbose "Series filtering completed, there are now $($filteredSeries.count) series left to process"
 
@@ -82,7 +52,7 @@ Write-Verbose "Series filtering completed, there are now $($filteredSeries.count
 foreach ($series in $filteredSeries){
 
     # Query API for a list of existing episodes matching the series loaded from $filteredSeries by specifying the series ID.
-    $seriesEpisodes = Invoke-RestMethod -Uri "$($config.Sonarr.sonarrURL)/api/v3/episodefile?seriesid=$($series.id)" -Headers $webHeaders
+    $seriesEpisodes = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/episodefile?seriesid=$($series.id)" -Headers $webHeaders
 
     # Filter results from previous command to only include episodes with TBA (case sensitive) or Episode XXXX (case sensitive) in their file path.
     $episodesToRename = $seriesEpisodes | Where-Object {$_.relativepath -cmatch "TBA|Episode [0-9]{1,}"}
@@ -99,26 +69,29 @@ foreach ($series in $filteredSeries){
         Write-Verbose "Starting metadata refresh of $($series.Title)"
 
         # Send command to Sonarr to refresh the series metadata
-        $refreshSeries = Invoke-RestMethod -Uri "$($config.Sonarr.sonarrURL)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RefreshSeries`",`"seriesId`": $($seriesIdToRefresh)}" -StatusCodeVariable apiStatusCode
+        $refreshSeries = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RefreshSeries`",`"seriesId`": $($seriesIdToRefresh)}" -StatusCodeVariable apiStatusCode
 
         if ($apiStatusCode -notmatch "2\d\d"){
             throw "Unable to refresh metadata for $($series.title)"
         }
-    }
 
-    if ($config.Sonarr.sonarrRename -eq "true"){
-        foreach ($episode in $episodesToRename){
+        Start-Sleep 5
 
-            $renameSeries = Invoke-RestMethod -Uri "$($config.Sonarr.sonarrURL)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RenameFiles`",`"seriesId`":$($episode.seriesId),`"files`":[$($episode.Id)]}" -StatusCodeVariable apiStatusCode
+        if ($renameSeries -eq $true){
 
-            if ($apiStatusCode -notmatch "2\d\d"){
-                throw "Unable to rename episodes for $($series.title)"
+            Write-Host "Renaming episodes in $($series.title)"
+
+            if ($episodesToRename.seriesid -eq $seriesIdToRefresh){
+
+                $renameCommand = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RenameFiles`",`"seriesId`":$($seriesIdToRefresh),`"files`":[$($episodesToRename.id -join ",")]}" -StatusCodeVariable apiStatusCode
+
+                if ($apiStatusCode -notmatch "2\d\d"){
+                    throw "Unable to rename episodes for $($series.title)"
+                }
             }
         }
-    }
-    else {
-        foreach ($episode in $episodesToRename){
-            Write-Host "$($series.title) has episodes to be renamed"
+        else {
+                Write-Host "$($series.title) has episodes to be renamed"
         }
     }
 }
