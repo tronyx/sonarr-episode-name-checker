@@ -85,7 +85,7 @@ foreach ($series in $filteredSeries){
 
         if ($renameSeries -eq $true){
 
-            Write-Host "Renaming episodes in $($series.title)"
+            Write-Output "Renaming episodes in $($series.title)"
 
             if ($episodesToRename.seriesid -eq $seriesIdToRefresh){
 
@@ -97,7 +97,7 @@ foreach ($series in $filteredSeries){
             }
         }
         else {
-                Write-Host "$($series.title) has episodes to be renamed"
+                Write-Output "$($series.title) has episodes to be renamed"
         }
     }
 }
