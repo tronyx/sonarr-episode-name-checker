@@ -33,16 +33,17 @@ It can take some trial and error for you to get all of the shows you need/want t
 
 ### Powershell
 
-:info: **NOTE:** Tthis Powershell script directly interacts with Sonarr's API. It does not support a Discord webhook like the bash script does. Instead we recommend you setup a webhook under `Settings > Connect` and select `Rename` to get Discord notifications when this script runs.
+**Note**
+This Powershell script directly interacts with Sonarr's API. It does not support a Discord webhook like the bash script does. Instead we recommend you setup a webhook under `Settings > Connect` and select `Rename` to get Discord notifications when this script runs.
 
 1. Clone or download the repo.
 2. Fill in the appropriate variables in `Powershell\SonarrEpisodeNameChecker.ps1`
 3. Modify the two exclude list text files to meet your needs.
     * :warning: **NOTE**: If you do not have anything to exclude make sure you blank out the files because they are both required to be there.
 4. Variables
-   1. :warning: **Required** `$sonarrApiKey`: Your Sonarr API Key.
-   2. :warning: **Required** `$sonarrUrl`: Your Sonarr URL.
-   3. :info: **Not required** `$sonarrSeriesStatus`: Accepts any values listed [here](https://github.com/Sonarr/Sonarr/blob/0a2b109a3fe101e260b623d0768240ef8b7a47ae/frontend/src/Components/Filter/Builder/SeriesStatusFilterBuilderRowValue.js#L5-L7).
+   1. **Warning** **Required** `$sonarrApiKey`: Your Sonarr API Key.
+   2. **Warning** **Required** `$sonarrUrl`: Your Sonarr URL.
+   3. **Note** **Not required** `$sonarrSeriesStatus`: Accepts any values listed [here](https://github.com/Sonarr/Sonarr/blob/0a2b109a3fe101e260b623d0768240ef8b7a47ae/frontend/src/Components/Filter/Builder/SeriesStatusFilterBuilderRowValue.js#L5-L7).
 
 :info: It is highly recommended that you do a dry run to see which series might need to be added to your exclusion list!
 
