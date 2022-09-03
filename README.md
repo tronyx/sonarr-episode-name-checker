@@ -27,9 +27,9 @@ Script to check for TV Show and Anime episodes that may be named with "Episode #
 5. Set any other variables you would like to set.
     * If `notify` is set to `true`, but you did not set the `webhook` variable the script will prompt you to enter it the first time you run it.
 
-:warning: **NOTE:** Depending on your directory structure this might not work for you. It is possible that you might need to put a path, run the script, adjust the path, run the script, etc. to get all your results.
-
-It can take some trial and error for you to get all of the shows you need/want to exclude as you will want to run the script and then check the shows that are listed for whether or not their episodes are actually named `Episode ##` or not.
+> **Warning**
+> Depending on your directory structure this might not work for you. It is possible that you might need to put a path, run the script, adjust the path, run the script, etc. to get all your results.
+> It can take some trial and error for you to get all of the shows you need/want to exclude as you will want to run the script and then check the shows that are listed for whether or not their episodes are actually named `Episode ##` or not.
 
 ### Powershell
 
