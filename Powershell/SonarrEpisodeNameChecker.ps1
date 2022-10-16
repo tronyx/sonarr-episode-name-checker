@@ -93,7 +93,7 @@ else {
 Write-Output "Series filtering completed, there are now $($filteredSeries.count) series left to process"
 
 # Loop through each object in $filteredSeries.
-<#foreach ($series in $filteredSeries){
+foreach ($series in $filteredSeries){
 
     # Query the "rename" endpoint in Sonarr's API to determine if any episodes need to be renamed
     $episodesToRename = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/rename?seriesId=$($series.id)" -Headers $webHeaders -StatusCodeVariable apiStatusCode
@@ -226,4 +226,4 @@ Write-Output "Series filtering completed, there are now $($filteredSeries.count)
             }
         }
     }
-}#>
+}
