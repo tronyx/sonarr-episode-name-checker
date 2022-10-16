@@ -26,7 +26,7 @@ if ((Test-Path $seriesExclusionsFile -PathType Leaf) -and (Test-Path $seriesPath
             throw "$($seriesPathExclusion) does not end in /"
         }
     }
-    Write-Output "Exclusions loaded"
+    Write-Verbose "Exclusions loaded"
 
 }
 
@@ -49,19 +49,19 @@ if ($apiStatusCode -notmatch "2\d\d"){
 # Replaces illegal characters based on your Series Folder Format from the exclusion list
 switch ($namingConfig){
     '{Series TitleYear} {imdb-{ImdbId}}' {
-        Write-Output "{Series TitleYear} {imdb-{ImdbId}} detected"
+        Write-Verbose "{Series TitleYear} {imdb-{ImdbId}} naming config detected"
         $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\) \{imdb-tt(.*)\}", ""
     }
     '{Series TitleYear} [imdb-{ImdbId}]'{
-        Write-Output "{Series TitleYear} [imdb-{ImdbId}] detected"
+        Write-Verbose "{Series TitleYear} [imdb-{ImdbId}] naming config detected"
         $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\) \[imdb-tt(.*)\]", ""
     }
     '{Series TitleYear}' {
-        Write-Output "{Series TitleYear} detected"
+        Write-Verbose "{Series TitleYear} naming config detected"
         $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\)"
     }
     '{Series TitleYear} [imdb-{ImdbId}][tvdb-{TvdbID}]' {
-        Write-Output "{Series TitleYear} [imdb-{ImdbId}][tvdb-{TvdbID}] detected"
+        Write-Verbose "{Series TitleYear} [imdb-{ImdbId}][tvdb-{TvdbID}] naming config detected"
         $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\) \[imdb-tt(.*)\]\[tvdb-(.*)\]",""
     }
     Default {
@@ -77,7 +77,7 @@ if ($apiStatusCode -notmatch "2\d\d"){
 }
 
 else {
-    Write-Output "Successfully loaded $($allSeries.count) series from Sonarr"
+    Write-Verbose "Successfully loaded $($allSeries.count) series from Sonarr"
 }
 
 # Filter out series with names that match anything in $seriesExclusions and anything that doesn't match the value of sonarrSeriesStatus
@@ -90,7 +90,7 @@ else {
     $filteredSeries = $allSeries | Where-Object {$_.title -notin $seriesExclusions -and $_.rootFolderPath -notin $seriesPathExclusions}
 }
 
-Write-Output "Series filtering completed, there are now $($filteredSeries.count) series left to process"
+Write-Verbose "Series filtering completed, there are now $($filteredSeries.count) series left to process"
 
 # Loop through each object in $filteredSeries.
 foreach ($series in $filteredSeries){
@@ -104,7 +104,7 @@ foreach ($series in $filteredSeries){
     # If the rename endpoint has episodes to be renamed, proceed with refreshing series metadata
     if ($episodesToRename.count -gt 0){
 
-        Write-Output "Starting metadata refresh of $($series.Title)"
+        Write-Verbose "Starting metadata refresh of $($series.Title)"
 
         # Send command to Sonarr to refresh the series metadata in case the episode name has changed from what's cached
         $refreshSeries = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RefreshSeries`",`"seriesId`": $($series.id)}" -StatusCodeVariable apiStatusCode
@@ -118,7 +118,7 @@ foreach ($series in $filteredSeries){
             $tasks = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/command" -Headers $webHeaders -Method Get
             $refreshTask = $tasks | Where-Object {$_.id -eq $refreshSeries.id}
 
-            Write-Output "Waiting for metadata refresh for $($series.title) to be finished"
+            Write-Verbose "Waiting for metadata refresh for $($series.title) to be finished"
             Start-Sleep 5
         } until (
             $refreshTask.status -eq "completed"
@@ -126,7 +126,7 @@ foreach ($series in $filteredSeries){
 
         # If $renameSeries parameter is true, proceed with renaming files
         if ($renameSeries -eq $true){
-            Write-Output "Renaming episodes in $($series.title)"
+            Write-Verbose "Renaming episodes in $($series.title)"
 
             # If there's only one episode, modify API call to only send the episode
             if ($episodesToRename.count -eq 1){
@@ -147,14 +147,14 @@ foreach ($series in $filteredSeries){
                 $tasks = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/command" -Headers $webHeaders -Method Get
                 $renameTask = $tasks | Where-Object {$_.id -eq $renameFiles.id}
 
-                Write-Output "Waiting for files to be renamed for $($series.title)"
+                Write-Verbose "Waiting for files to be renamed for $($series.title)"
                 Start-Sleep 5
                 } until (
                     $renameTask.status -eq "completed"
                 )
         }
         else {
-                Write-Output "$($series.title) has episodes to be renamed"
+                Write-Verbose "$($series.title) has episodes to be renamed"
         }
     }
 
@@ -163,16 +163,16 @@ foreach ($series in $filteredSeries){
         # Query Sonarr's API using the "$series.id" for a list of existing episodes
         $seriesEpisodes = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/episodefile?seriesid=$($series.id)" -Headers $webHeaders
 
-        Write-Output "$($series.title) has $($seriesepisodes.count) episodes"
+        Write-Verbose "$($series.title) has $($seriesepisodes.count) episodes"
 
         # Filter results from previous command to only include episodes with TBA (case sensitive) or Episode XXXX (case sensitive) in their file path.
         $episodesToRename = $seriesEpisodes | Where-Object {$_.relativepath -cmatch "TBA|Episode [0-9]{1,}"}
 
-        Write-Output "$($series.title) with ID $($series.id) has $($episodesToRename.count
+        Write-Verbose "$($series.title) with ID $($series.id) has $($episodesToRename.count
         ) episodes to be renamed"
 
         if ($episodesToRename.count -gt 0){
-            Write-Output "Starting metadata refresh of $($series.Title)"
+            Write-Verbose "Starting metadata refresh of $($series.Title)"
 
             # Send command to Sonarr to refresh the series metadata in case the episode name has changed from what's cached
             $refreshSeries = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/command" -Headers $webHeaders -Method Post -ContentType "application/json" -Body "{`"name`":`"RefreshSeries`",`"seriesId`": $($series.id)}" -StatusCodeVariable apiStatusCode
@@ -186,7 +186,7 @@ foreach ($series in $filteredSeries){
                 $tasks = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/command" -Headers $webHeaders -Method Get
                 $refreshTask = $tasks | Where-Object {$_.id -eq $refreshSeries.id}
 
-                Write-Output "Waiting for metadata refresh for $($series.title) to be finished"
+                Write-Verbose "Waiting for metadata refresh for $($series.title) to be finished"
                 Start-Sleep 5
             } until (
                 $refreshTask.status -eq "completed"
@@ -194,7 +194,7 @@ foreach ($series in $filteredSeries){
 
             # If $renameSeries parameter is true, proceed with renaming files
             if ($renameSeries -eq $true){
-                Write-Output "Renaming episodes in $($series.title)"
+                Write-Verbose "Renaming episodes in $($series.title)"
 
                 # If there's only one episode, modify API call to only send the episode
                 if ($episodesToRename.count -eq 1){
@@ -215,14 +215,14 @@ foreach ($series in $filteredSeries){
                     $tasks = Invoke-RestMethod -Uri "$($sonarrUrl)/api/v3/command" -Headers $webHeaders -Method Get
                     $renameTask = $tasks | Where-Object {$_.id -eq $renameFiles.id}
 
-                    Write-Output "Waiting for files to be renamed for $($series.title)"
+                    Write-Verbose "Waiting for files to be renamed for $($series.title)"
                     Start-Sleep 5
                     } until (
                         $renameTask.status -eq "completed"
                     )
             }
             else {
-                    Write-Output "$($series.title) has episodes to be renamed"
+                    Write-Verbose "$($series.title) has episodes to be renamed"
             }
         }
     }
