@@ -7,8 +7,8 @@ param (
 
 #------------- DEFINE VARIABLES -------------#
 
-[string]$sonarrApiKey = "9fece972e94d495a9c8a4fcc67b5d41f"
-[string]$sonarrUrl = "http://blackbox.lan:8989/sonarr"
+[string]$sonarrApiKey = ""
+[string]$sonarrUrl = ""
 [string]$sonarrSeriesStatus = ""
 
 #------------- SCRIPT STARTS -------------#
