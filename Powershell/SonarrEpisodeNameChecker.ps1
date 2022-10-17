@@ -15,15 +15,23 @@ param (
 
 # Specify location of exclusions file, normally located one directory above the current script location.
 $seriesExclusionsFile = Join-Path (Get-Item $PSScriptRoot).Parent -ChildPath excludes\name_excludes.txt
+$seriesPathExclusionsFile = Join-Path (Get-Item $PSScriptRoot).Parent -ChildPath \excludes\path_excludes.txt
 
 # Import the contents of the series exclusion list.
-if (Test-Path $seriesExclusionsFile -PathType Leaf){
+if ((Test-Path $seriesExclusionsFile -PathType Leaf) -and (Test-Path $seriesPathExclusionsFile -PathType Leaf)){
     $seriesExclusions = Get-Content $seriesExclusionsFile
+    $seriesPathExclusions = Get-Content $seriesPathExclusionsFile
+    foreach ($seriesPathExclusion in $seriesPathExclusions){
+        if (-Not $seriesPathExclusion.EndsWith("/")){
+            throw "$($seriesPathExclusion) does not end in /"
+        }
+    }
     Write-Verbose "Exclusions loaded"
+
 }
 
 else {
-    throw "Unable to locate exclusions file"
+    throw "Unable to locate exclusions files"
 }
 
 # Declare headers that will be passed on each API call.
@@ -38,29 +46,27 @@ if ($apiStatusCode -notmatch "2\d\d"){
     throw "Unable to retrieve Series Folder Format from Sonarr"
 }
 
-# Replaces characters based on your Series Folder Format from the exclusion list
-if ($namingConfig -eq '{Series TitleYear} {imdb-{ImdbId}}'){
-    $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\) \{imdb-tt(.*)\}", ""
-}
-
-# Replaces characters based on your Series Folder Format from the exclusion list
-elseif ($namingConfig -eq '{Series TitleYear} [imdb-{ImdbId}]'){
-    $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\) \[imdb-tt(.*)\]", ""
-}
-
-# Replaces characters based on your Series Folder Format from the exclusion list
-elseif ($namingConfig -eq '{Series TitleYear}'){
-    $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\)"
-}
-
-# I hate you Zak
-elseif ($namingconfig -eq '{Series TitleYear} [imdb-{ImdbId}][tvdb-{TvdbID}]'){
-    $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\) \[imdb-tt(.*)\]\[tvdb-(.*)\]",""
-}
-
-# If using a different naming scheme than what is recommended by TRaSH Guides, exit with error
-else {
-    throw "`nYou are not using a supported naming scheme. Supported naming schemes are:`n{Series TitleYear}`n{Series TitleYear} [imdb-{ImdbId}]`n{Series TitleYear} {imdb-{ImdbId}}"
+# Replaces illegal characters based on your Series Folder Format from the exclusion list
+switch ($namingConfig){
+    '{Series TitleYear} {imdb-{ImdbId}}' {
+        Write-Verbose "{Series TitleYear} {imdb-{ImdbId}} naming config detected"
+        $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\) \{imdb-tt(.*)\}", ""
+    }
+    '{Series TitleYear} [imdb-{ImdbId}]'{
+        Write-Verbose "{Series TitleYear} [imdb-{ImdbId}] naming config detected"
+        $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\) \[imdb-tt(.*)\]", ""
+    }
+    '{Series TitleYear}' {
+        Write-Verbose "{Series TitleYear} naming config detected"
+        $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\)"
+    }
+    '{Series TitleYear} [imdb-{ImdbId}][tvdb-{TvdbID}]' {
+        Write-Verbose "{Series TitleYear} [imdb-{ImdbId}][tvdb-{TvdbID}] naming config detected"
+        $seriesExclusions = $seriesExclusions -replace "\(\d\d\d\d\) \[imdb-tt(.*)\]\[tvdb-(.*)\]",""
+    }
+    Default {
+        throw "`nYou are not using a supported naming scheme. Supported naming schemes are:`n{Series TitleYear}`n{Series TitleYear} [imdb-{ImdbId}]`n{Series TitleYear} {imdb-{ImdbId}}"
+    }
 }
 
 # Retrieve all Sonarr series.
@@ -76,12 +82,12 @@ else {
 
 # Filter out series with names that match anything in $seriesExclusions and anything that doesn't match the value of sonarrSeriesStatus
 if ($sonarrSeriesStatus -ne ""){
-    $filteredSeries = $allSeries | Where-Object {$_.title -notin $seriesExclusions -and $_.status -eq $($sonarrSeriesStatus)}
+    $filteredSeries = $allSeries | Where-Object {$_.title -notin $seriesExclusions -and $_.rootFolderPath -notin $seriesPathExclusions -and $_.status -eq $($sonarrSeriesStatus)}
 }
 
 # Filter out series with names that match anything in $seriesExclusions
 else {
-    $filteredSeries = $allSeries | Where-Object {$_.title -notin $seriesExclusions}
+    $filteredSeries = $allSeries | Where-Object {$_.title -notin $seriesExclusions -and $_.rootFolderPath -notin $seriesPathExclusions}
 }
 
 Write-Verbose "Series filtering completed, there are now $($filteredSeries.count) series left to process"
@@ -148,7 +154,7 @@ foreach ($series in $filteredSeries){
                 )
         }
         else {
-                Write-Output "$($series.title) has episodes to be renamed"
+                Write-Verbose "$($series.title) has episodes to be renamed"
         }
     }
 
@@ -188,7 +194,7 @@ foreach ($series in $filteredSeries){
 
             # If $renameSeries parameter is true, proceed with renaming files
             if ($renameSeries -eq $true){
-                Write-Output "Renaming episodes in $($series.title)"
+                Write-Verbose "Renaming episodes in $($series.title)"
 
                 # If there's only one episode, modify API call to only send the episode
                 if ($episodesToRename.count -eq 1){
@@ -216,7 +222,7 @@ foreach ($series in $filteredSeries){
                     )
             }
             else {
-                    Write-Output "$($series.title) has episodes to be renamed"
+                    Write-Verbose "$($series.title) has episodes to be renamed"
             }
         }
     }
